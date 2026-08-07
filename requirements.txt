@@ -1,0 +1,21 @@
+# Core pipeline + valuation engine
+requests>=2.32,<3
+pandas>=2.0,<3
+numpy>=1.24,<3
+
+# Market data (price / market cap / beta) — the model degrades gracefully if this fails
+yfinance>=0.2
+
+# Excel workbook generation
+openpyxl>=3.1,<4
+
+# Charts (tornado, sensitivity heatmap)
+matplotlib>=3.7,<4
+
+# Interactive web app
+streamlit>=1.30
+
+# Workbook recalculation fallback when LibreOffice is unavailable.
+# Optional: recalc_check.py prefers LibreOffice headless and only imports this
+# if that is missing.
+formulas>=1.2

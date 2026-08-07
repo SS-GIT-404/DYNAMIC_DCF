@@ -1,0 +1,30 @@
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Generated artifacts — regenerate with build_excel.py / valuation.py
+models/
+output/
+data/
+
+# Editor / OS / agent tooling
+.vscode/
+.idea/
+.claude/
+.DS_Store
+Thumbs.db
+
+# Pre-existing file found in this folder, unrelated to this project.
+# Excluded deliberately — remove this line if you want it in the repo.
+PYPL_Valuation_Model.xlsx
+
+# Streamlit local secrets
+.streamlit/secrets.toml
