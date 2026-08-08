@@ -81,7 +81,10 @@ echo   Close it to shut down.
 echo   ---------------------------------------------
 echo.
 
-"%VENV_PY%" -m streamlit run app.py
+REM --server.address=127.0.0.1 keeps this private to THIS computer. It is set
+REM here rather than in .streamlit/config.toml because that file is shared with
+REM the hosted deployment, where pinning the address breaks it for visitors.
+"%VENV_PY%" -m streamlit run app.py --server.address=127.0.0.1 --server.port=8501
 
 echo.
 echo   Tool stopped.

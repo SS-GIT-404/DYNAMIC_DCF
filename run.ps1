@@ -42,7 +42,10 @@ if (-not $env:SEC_UA_EMAIL) {
 }
 
 switch ($Command) {
-    "app"    { & $venvPython -m streamlit run app.py }
+    # Bound to loopback so a local run is never reachable from the network.
+    # Set here, not in .streamlit/config.toml, because that file ships to the
+    # hosted deployment where a pinned address breaks it for visitors.
+    "app"    { & $venvPython -m streamlit run app.py --server.address=127.0.0.1 --server.port=8501 }
     "value"  { & $venvPython valuation.py @Args }
     "excel"  { & $venvPython build_excel.py @Args }
     "data"   { & $venvPython sec_pull.py @Args }
