@@ -79,18 +79,29 @@ python build_excel.py AAPL             # live Excel workbook
 streamlit run app.py                   # interactive web app
 ```
 
-### SEC contact string
+### SEC contact string (required)
 
-The SEC asks automated callers to identify themselves and throttles those that
-don't. Set it before running:
+The SEC requires automated callers to identify themselves and returns **HTTP 403**
+to anyone using a placeholder address. Set this before your first run or nothing
+will fetch:
 
 ```powershell
-$env:SEC_UA_EMAIL = "you@example.com"     # PowerShell
+$env:SEC_UA_EMAIL = "you@example.com"     # PowerShell (current session)
 ```
 
 ```bash
 export SEC_UA_EMAIL="you@example.com"     # bash / zsh
 ```
+
+To avoid setting it every session, persist it once:
+
+```powershell
+[Environment]::SetEnvironmentVariable("SEC_UA_EMAIL", "you@example.com", "User")
+```
+
+No contact address is hard-coded in this repository — deliberately, so a personal
+address is never committed to public source. On Streamlit Community Cloud, set it
+under **Settings → Secrets** instead.
 
 ---
 

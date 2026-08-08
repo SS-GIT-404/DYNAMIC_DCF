@@ -21,7 +21,7 @@ import streamlit as st
 import charts
 from build_excel import build_workbook
 from market_data import MarketData, fetch_market_data
-from sec_pull import DISPLAY_ORDER, Financials, pull_financials
+from sec_pull import DISPLAY_ORDER, Financials, SECContactError, pull_financials
 from valuation import (Assumptions, derive_assumptions, run_dcf,
                        sensitivity_grid, tornado)
 
@@ -91,6 +91,15 @@ if "ran" not in st.session_state:
 try:
     with st.spinner(f"Pulling {ticker} filings from SEC EDGAR…"):
         fin = load_financials(ticker)
+except SECContactError as exc:
+    # Misconfiguration, not a bad ticker — give the fix, not a stack trace.
+    st.error("**SEC contact string not configured**")
+    st.code('SEC_UA_EMAIL = "you@example.com"', language="toml")
+    st.markdown(
+        "Set `SEC_UA_EMAIL` before launching, or add it under **Settings → "
+        "Secrets** if this is deployed on Streamlit Community Cloud. "
+        "The SEC blocks callers that don't identify themselves.")
+    st.stop()
 except Exception as exc:  # noqa: BLE001 — surface a clean message to the user
     st.error(f"Could not load **{ticker}** — {exc}")
     st.info("Check the symbol is a US-listed company that files with the SEC.")

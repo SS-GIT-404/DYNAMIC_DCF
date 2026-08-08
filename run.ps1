@@ -36,7 +36,9 @@ if (-not (Test-Path $venvPython)) {
 }
 
 if (-not $env:SEC_UA_EMAIL) {
-    Write-Host "(SEC_UA_EMAIL not set - using the fallback contact in sec_pull.py)" -ForegroundColor DarkGray
+    Write-Host "SEC_UA_EMAIL is not set - the SEC will reject requests with HTTP 403." -ForegroundColor Yellow
+    Write-Host 'Set it with:  $env:SEC_UA_EMAIL = "you@example.com"' -ForegroundColor Gray
+    Write-Host ""
 }
 
 switch ($Command) {

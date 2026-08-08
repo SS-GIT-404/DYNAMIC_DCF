@@ -52,12 +52,32 @@ import requests
 # Configuration
 # --------------------------------------------------------------------------- #
 
-# SEC asks every automated caller to identify itself with a real contact string.
-# The env var takes precedence; the fallback keeps runs working out of the box.
-# NOTE (privacy): the fallback below is a personal address. Before publishing this
-# repo publicly, consider switching to the env-var-only form to avoid email
-# scraping — see the Phase 5 note / README.
-UA_EMAIL = os.environ.get("SEC_UA_EMAIL", "contact-not-set@example.com")
+# The SEC asks every automated caller to identify itself with a real contact
+# string and throttles those that don't. Supply it via the SEC_UA_EMAIL
+# environment variable — deliberately not hard-coded here, so a personal address
+# never ends up committed to a public repository:
+#
+#     PowerShell:  $env:SEC_UA_EMAIL = "you@example.com"
+#     bash/zsh:    export SEC_UA_EMAIL="you@example.com"
+UA_EMAIL = os.environ.get("SEC_UA_EMAIL", "").strip() or "contact-not-set@example.com"
+UA_IS_PLACEHOLDER = "example.com" in UA_EMAIL
+
+
+class SECContactError(RuntimeError):
+    """Raised when the SEC rejects us for not supplying a real contact string."""
+
+    MESSAGE = (
+        "The SEC refused the request (HTTP 403).\n\n"
+        "This almost always means SEC_UA_EMAIL is not set. The SEC requires "
+        "automated callers to identify themselves with a real contact address "
+        "and blocks placeholder ones.\n\n"
+        "  PowerShell:  $env:SEC_UA_EMAIL = \"you@example.com\"\n"
+        "  bash/zsh:    export SEC_UA_EMAIL=\"you@example.com\"\n\n"
+        "Then run the command again."
+    )
+
+    def __init__(self, url: str = ""):
+        super().__init__(self.MESSAGE + (f"\n\n(url: {url})" if url else ""))
 
 HEADERS = {
     "User-Agent": f"dynamic-dcf-model/1.0 ({UA_EMAIL})",
@@ -267,8 +287,12 @@ def _get(url: str, host: Optional[str] = None) -> requests.Response:
             resp = requests.get(url, headers=headers, timeout=30)
             if resp.status_code == 200:
                 return resp
+            if resp.status_code == 403 and UA_IS_PLACEHOLDER:
+                # Retrying will not help: the SEC is rejecting the contact string
+                # itself. Fail immediately with an actionable message.
+                raise SECContactError(url)
             if resp.status_code in (403, 429):
-                time.sleep(1.0 + attempt)     # back off; SEC throttles fake/aggressive UAs
+                time.sleep(1.0 + attempt)     # back off; SEC throttles aggressive callers
                 continue
             if resp.status_code == 404:
                 return resp                    # let caller handle "not found"
