@@ -33,24 +33,63 @@ The design principle throughout: **an assumption you cannot see is an assumption
 
 ## Quick start
 
-```bash
-python -m venv .venv && .venv/Scripts/activate    # Windows
-pip install -r requirements.txt
-```
+### Windows (PowerShell)
 
-Set a contact string for the SEC (they require one, and throttle anonymous callers):
-
-```bash
-export SEC_UA_EMAIL="you@example.com"
+```powershell
+.\setup.ps1
 ```
 
 Then pick a surface:
+
+```powershell
+.\run.ps1 app              # interactive web app
+.\run.ps1 value AAPL       # full DCF + sensitivity + tornado
+.\run.ps1 excel AAPL       # live Excel workbook
+.\run.ps1 data AAPL JPM O  # standardized SEC financials
+```
+
+`run.ps1` calls the virtual environment's interpreter directly, so you never
+need to activate anything.
+
+> **Why the scripts?** On Windows, `python` is usually *not* a working command
+> even with Python installed — an "app execution alias" intercepts it and opens
+> the Microsoft Store instead. The real command is `py`. `setup.ps1` detects
+> this and uses whichever interpreter actually works. If you'd rather run things
+> by hand, call the venv interpreter directly:
+> `.venv\Scripts\python.exe valuation.py AAPL`
+
+If PowerShell blocks the scripts (`running scripts is disabled on this system`),
+allow local scripts for your user once:
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
+
+### macOS / Linux
+
+```bash
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+```
 
 ```bash
 python sec_pull.py AAPL JPM O          # standardized financials
 python valuation.py AAPL               # full DCF + sensitivity + tornado
 python build_excel.py AAPL             # live Excel workbook
 streamlit run app.py                   # interactive web app
+```
+
+### SEC contact string
+
+The SEC asks automated callers to identify themselves and throttles those that
+don't. Set it before running:
+
+```powershell
+$env:SEC_UA_EMAIL = "you@example.com"     # PowerShell
+```
+
+```bash
+export SEC_UA_EMAIL="you@example.com"     # bash / zsh
 ```
 
 ---
