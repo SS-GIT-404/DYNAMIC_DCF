@@ -52,10 +52,40 @@ import requests
 # Configuration
 # --------------------------------------------------------------------------- #
 
+def _load_local_settings() -> None:
+    """
+    Load KEY=VALUE pairs from settings.local.env (or .env) beside this file.
+
+    Keeps a personal contact address out of the source while still letting the
+    tool run with no manual setup. Real environment variables always win, and a
+    missing file is not an error.
+    """
+    here = os.path.dirname(os.path.abspath(__file__))
+    for name in ("settings.local.env", ".env"):
+        path = os.path.join(here, name)
+        if not os.path.exists(path):
+            continue
+        try:
+            with open(path, "r", encoding="utf-8") as fh:
+                for line in fh:
+                    line = line.strip()
+                    if not line or line.startswith("#") or "=" not in line:
+                        continue
+                    key, _, value = line.partition("=")
+                    key, value = key.strip(), value.strip().strip('"').strip("'")
+                    if key and key not in os.environ:
+                        os.environ[key] = value
+        except OSError:
+            pass          # unreadable settings file is not fatal
+        break
+
+
+_load_local_settings()
+
 # The SEC asks every automated caller to identify itself with a real contact
-# string and throttles those that don't. Supply it via the SEC_UA_EMAIL
-# environment variable — deliberately not hard-coded here, so a personal address
-# never ends up committed to a public repository:
+# string and rejects placeholder ones. It is read from the environment (or
+# settings.local.env above) rather than hard-coded, so a personal address never
+# ends up inside the source:
 #
 #     PowerShell:  $env:SEC_UA_EMAIL = "you@example.com"
 #     bash/zsh:    export SEC_UA_EMAIL="you@example.com"

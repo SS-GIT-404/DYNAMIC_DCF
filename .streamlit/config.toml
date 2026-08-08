@@ -1,0 +1,28 @@
+# Local-only configuration.
+#
+# The important line is `address = "127.0.0.1"`. By default Streamlit binds to
+# every network interface and advertises a Network URL and an External URL, so
+# anyone on the same Wi-Fi could open the app. Binding to the loopback address
+# means the server only accepts connections from this machine — nothing is
+# reachable from another device, and nothing leaves the computer.
+
+[server]
+address = "127.0.0.1"
+port = 8501
+headless = true
+fileWatcherType = "auto"
+
+[browser]
+# Never phone home with usage statistics.
+gatherUsageStats = false
+serverAddress = "localhost"
+serverPort = 8501
+
+[theme]
+base = "light"
+primaryColor = "#2a78d6"
+
+[client]
+# Show errors in the browser rather than only in the console.
+showErrorDetails = true
+toolbarMode = "minimal"

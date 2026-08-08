@@ -28,3 +28,8 @@ PYPL_Valuation_Model.xlsx
 
 # Streamlit local secrets
 .streamlit/secrets.toml
+
+# Local machine settings (contains a personal contact address).
+# Never commit or share this file.
+settings.local.env
+.env
