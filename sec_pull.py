@@ -89,7 +89,42 @@ _load_local_settings()
 #
 #     PowerShell:  $env:SEC_UA_EMAIL = "you@example.com"
 #     bash/zsh:    export SEC_UA_EMAIL="you@example.com"
-UA_EMAIL = os.environ.get("SEC_UA_EMAIL", "").strip() or "contact-not-set@example.com"
+PLACEHOLDER_EMAIL = "contact-not-set@example.com"
+
+
+def _streamlit_secret(key: str) -> str:
+    """
+    Read a value from Streamlit's secrets store, if we are running inside it.
+
+    Streamlit Community Cloud supplies configuration through st.secrets rather
+    than the process environment, so an app that only reads os.environ works
+    locally and then fails with a 403 once deployed. Import errors and missing
+    keys are both normal here — this returns "" whenever there is nothing to find.
+    """
+    try:
+        import streamlit as st
+        return str(st.secrets.get(key, "")).strip()
+    except Exception:      # noqa: BLE001 — not on Streamlit, or no secrets file
+        return ""
+
+
+def get_contact_email() -> str:
+    """Current SEC contact address. Environment first, then Streamlit secrets."""
+    return (os.environ.get("SEC_UA_EMAIL", "").strip()
+            or _streamlit_secret("SEC_UA_EMAIL")
+            or PLACEHOLDER_EMAIL)
+
+
+def build_headers(host: str = "data.sec.gov") -> Dict[str, str]:
+    """Request headers, with the contact resolved at call time (not at import)."""
+    return {
+        "User-Agent": f"dynamic-dcf-model/1.0 ({get_contact_email()})",
+        "Accept-Encoding": "gzip, deflate",
+        "Host": host,
+    }
+
+
+UA_EMAIL = get_contact_email()
 UA_IS_PLACEHOLDER = "example.com" in UA_EMAIL
 
 
@@ -102,7 +137,9 @@ class SECContactError(RuntimeError):
         "automated callers to identify themselves with a real contact address "
         "and blocks placeholder ones.\n\n"
         "  PowerShell:  $env:SEC_UA_EMAIL = \"you@example.com\"\n"
-        "  bash/zsh:    export SEC_UA_EMAIL=\"you@example.com\"\n\n"
+        "  bash/zsh:    export SEC_UA_EMAIL=\"you@example.com\"\n"
+        "  local file:  settings.local.env  ->  SEC_UA_EMAIL=you@example.com\n"
+        "  Streamlit:   Settings -> Secrets ->  SEC_UA_EMAIL = \"you@example.com\"\n\n"
         "Then run the command again."
     )
 
@@ -308,16 +345,17 @@ class Financials:
 
 def _get(url: str, host: Optional[str] = None) -> requests.Response:
     """GET with the required SEC headers, light retry, and rate-limit courtesy."""
-    headers = dict(HEADERS)
-    if host:
-        headers["Host"] = host
+    # Built per call so the contact address is picked up even when it only
+    # becomes available after import (e.g. Streamlit secrets on first run).
+    headers = build_headers(host or "data.sec.gov")
+    is_placeholder = "example.com" in headers["User-Agent"]
     last_exc = None
     for attempt in range(4):
         try:
             resp = requests.get(url, headers=headers, timeout=30)
             if resp.status_code == 200:
                 return resp
-            if resp.status_code == 403 and UA_IS_PLACEHOLDER:
+            if resp.status_code == 403 and is_placeholder:
                 # Retrying will not help: the SEC is rejecting the contact string
                 # itself. Fail immediately with an actionable message.
                 raise SECContactError(url)
