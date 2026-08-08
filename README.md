@@ -1,5 +1,5 @@
 # Dynamic DCF Valuation Model
-
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://dynamicdcf-jxj9n6sxdxsqmvzzfk5ash.streamlit.app/)
 **At its own historical fundamentals, Apple is worth about $113–135 a share. It trades at $312.**
 
 That gap — roughly **62–64% below** the market price — is not a modelling error, and finding it is the point of this project. Run the model and it will tell you exactly what the market is assuming that history does not support:
